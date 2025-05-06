@@ -228,9 +228,11 @@ const server = new Server({
 export async function startServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.log("MCP Server started");
 }
 
 if (require.main === module) {
-  startServer().catch(console.error);
+  startServer().catch((error) => {
+    process.exitCode = 1;
+    process.stderr.write(`Failed to start MCP server: ${error instanceof Error ? error.message : "Unknown error"}\n`);
+  });
 }

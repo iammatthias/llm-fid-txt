@@ -108,19 +108,12 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
 
   try {
-    // Add proper headers for Cloudflare Workers
     const headers = {
-      "User-Agent": "Mozilla/5.0 (Cloudflare Workers)",
-      Accept: "application/json",
       "Accept-Language": "en-US,en;q=0.9",
       Origin: "https://llm-fid.fun",
       Referer: "https://llm-fid.fun/",
       ...options.headers,
     };
-
-    // Log the request for debugging
-    console.log(`Making request to: ${url}`);
-    console.log("Request headers:", headers);
 
     const response = await fetch(url, {
       ...options,
@@ -134,13 +127,8 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise
       },
     });
 
-    // Log the response for debugging
-    console.log(`Response status: ${response.status}`);
-    console.log("Response headers:", Object.fromEntries(response.headers.entries()));
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Error response:", errorText);
       throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
@@ -194,7 +182,6 @@ async function resolveFid(username: string): Promise<number> {
 
     return data.fid;
   } catch (error) {
-    console.error("Error resolving username:", error);
     throw error;
   }
 }
