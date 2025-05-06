@@ -176,7 +176,8 @@ function App() {
 
       <p>
         <small>
-          Built by <a href='https://warpcast.com/iammatthias'>@iammatthias</a>
+          Built by <a href='https://warpcast.com/iammatthias'>@iammatthias</a>. Open source:{" "}
+          <a href='https://github.com/iammatthias/llm-fid-txt'>github.com/iammatthias/llm-fid-txt</a>
         </small>
       </p>
     </div>
