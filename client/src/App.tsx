@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import type { MCPQueryParams } from "shared";
+import type { FarcasterQueryParams } from "shared";
 import "./App.css";
 
 // Server URL configuration
-const SERVER_URL = import.meta.env.PROD ? "https://api.llm-fid.fun" : "http://localhost:3000";
+const SERVER_URL = import.meta.env.PROD ? "https://api.llm-fid.fun" : "http://localhost:5173/api";
 
 // Custom debounce hook
 function useDebounce<T>(value: T, delay: number): T {
@@ -27,7 +27,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
-  const [params, setParams] = useState<MCPQueryParams>({
+  const [params, setParams] = useState<FarcasterQueryParams>({
     limit: 10,
     includeReplies: false,
     all: false,
@@ -52,17 +52,22 @@ function App() {
       if (isFid) {
         queryParams.set("fid", debouncedInput);
       } else {
-        queryParams.set("username", debouncedInput);
+        // Remove @ symbol if present and normalize to lowercase
+        const cleanUsername = debouncedInput.trim().replace(/^@/, "").toLowerCase();
+        queryParams.set("username", cleanUsername);
       }
 
       // Add optional parameters
-      if (params.limit) queryParams.set("limit", params.limit.toString());
+      if (params.limit && !params.all) queryParams.set("limit", params.limit.toString());
       queryParams.set("includeReplies", params.includeReplies ? "true" : "false");
       if (params.all) queryParams.set("all", "true");
       if (params.sortOrder) queryParams.set("sortOrder", params.sortOrder);
 
-      setGeneratedUrl(`${SERVER_URL}/mcp?${queryParams.toString()}`);
+      const url = `${SERVER_URL}?${queryParams.toString()}`;
+      console.log("Generated URL:", url); // Debug log
+      setGeneratedUrl(url);
     } catch (err) {
+      console.error("Error generating URL:", err); // Debug log
       setGeneratedUrl(null);
     }
   }, [debouncedInput, params]);
@@ -75,8 +80,17 @@ function App() {
     setError(null);
 
     try {
-      // Open in new tab with the full server URL
-      window.open(generatedUrl, "_blank");
+      // Normalize the URL to ensure username is lowercase
+      const url = new URL(generatedUrl);
+      if (url.searchParams.has("username")) {
+        const username = url.searchParams.get("username");
+        if (username) {
+          url.searchParams.set("username", username.toLowerCase());
+        }
+      }
+
+      // Open in new tab with the normalized URL
+      window.open(url.toString(), "_blank");
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

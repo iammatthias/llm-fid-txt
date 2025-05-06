@@ -43,13 +43,13 @@ export interface UserNameProof {
   type: string;
 }
 
-export interface MCPResponse {
+export interface FarcasterResponse {
   user: FarcasterUser;
   casts: FarcasterCast[];
 }
 
-export interface MCPQueryParams {
-  fid?: string | number;
+export interface FarcasterQueryParams {
+  fid?: number;
   username?: string;
   limit?: number;
   includeReplies?: boolean;
