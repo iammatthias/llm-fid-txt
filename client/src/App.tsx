@@ -32,6 +32,8 @@ function App() {
     includeReplies: false,
     all: false,
     sortOrder: "newest",
+    includeReactions: false,
+    includeParents: false,
   });
 
   // Debounce the input value
@@ -62,12 +64,12 @@ function App() {
       queryParams.set("includeReplies", params.includeReplies ? "true" : "false");
       if (params.all) queryParams.set("all", "true");
       if (params.sortOrder) queryParams.set("sortOrder", params.sortOrder);
+      if (params.includeReactions) queryParams.set("includeReactions", "true");
+      if (params.includeParents) queryParams.set("includeParents", "true");
 
       const url = `${SERVER_URL}?${queryParams.toString()}`;
-      console.log("Generated URL:", url); // Debug log
       setGeneratedUrl(url);
     } catch (err) {
-      console.error("Error generating URL:", err); // Debug log
       setGeneratedUrl(null);
     }
   }, [debouncedInput, params]);
@@ -90,7 +92,10 @@ function App() {
       }
 
       // Open in new tab with the normalized URL
-      window.open(url.toString(), "_blank");
+      const newWindow = window.open(url.toString(), "_blank");
+      if (!newWindow) {
+        setError("Please allow popups for this site to generate the file");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -98,10 +103,36 @@ function App() {
     }
   };
 
+  // Helper function to get loading message based on params
+  const getLoadingMessage = () => {
+    if (!isLoading) return null;
+    const messages = [];
+    if (params.all) {
+      messages.push("Fetching all posts");
+    } else if (params.limit && params.limit > 50) {
+      messages.push(`Fetching ${params.limit} posts`);
+    }
+    if (params.includeReplies) {
+      messages.push("Including replies");
+    }
+    return messages.length > 0 ? messages.join(" • ") : "Generating...";
+  };
+
   return (
     <div className='container'>
       <h1>LLM-[FID].txt</h1>
       <p>Generate a llm.txt file for a Farcaster profile</p>
+
+      <h3>Note</h3>
+      <p>
+        The file generation may take longer when:
+        <ul>
+          <li>Fetching all posts</li>
+          <li>Including replies</li>
+          <li>Requesting a large number of posts</li>
+        </ul>
+        Please be patient as the file streams in.
+      </p>
 
       <form onSubmit={handleSubmit} className='form'>
         <div className='form-section'>
@@ -116,19 +147,19 @@ function App() {
               required
             />
             <button type='submit' disabled={isLoading || !generatedUrl}>
-              {isLoading ? "Generating..." : "Generate"}
+              {getLoadingMessage() || "Generate"}
             </button>
           </div>
           {generatedUrl && (
-            <div className='url-display'>
-              <span className='url-text'>{generatedUrl}</span>
-            </div>
+            <p>
+              <small>{generatedUrl}</small>
+            </p>
           )}
         </div>
 
         <div className='form-section'>
           <h2>Options</h2>
-          <div className='controls'>
+          <div className='options'>
             <div className='control-group'>
               <label>
                 <span>Post Limit</span>
@@ -139,7 +170,6 @@ function App() {
                   min='1'
                   disabled={params.all}
                 />
-                <small>Default: 10 posts</small>
               </label>
             </div>
 
@@ -153,32 +183,73 @@ function App() {
                   <option value='newest'>Newest First</option>
                   <option value='oldest'>Oldest First</option>
                 </select>
-                <small>Default: Newest First</small>
               </label>
             </div>
 
-            <div className='control-group checkboxes'>
-              <label>
+            <div className='control-group'>
+              <label className='checkbox-label'>
                 <input
                   type='checkbox'
                   checked={params.all}
-                  onChange={(e) => setParams({ ...params, all: e.target.checked })}
+                  onChange={(e) => {
+                    setParams((prev) => ({
+                      ...prev,
+                      all: e.target.checked,
+                      limit: e.target.checked ? undefined : 10,
+                      includeReplies: e.target.checked ? false : prev.includeReplies,
+                      includeReactions: e.target.checked ? false : prev.includeReactions,
+                      includeParents: e.target.checked ? false : prev.includeParents,
+                    }));
+                  }}
                 />
                 <div>
-                  <span>Fetch All Posts</span>
-                  <small>Ignores post limit</small>
+                  <span>Fetch All Top-Level Casts</span>
+                  <small>Ignores post limit, excludes replies and reactions</small>
                 </div>
               </label>
+            </div>
 
-              <label>
+            <div className='control-group'>
+              <label className='checkbox-label'>
+                <input
+                  type='checkbox'
+                  checked={params.includeReactions}
+                  onChange={(e) => setParams({ ...params, includeReactions: e.target.checked })}
+                  disabled={params.all}
+                />
+                <div>
+                  <span>Include Reactions</span>
+                  <small>Show likes and recasts</small>
+                </div>
+              </label>
+            </div>
+
+            <div className='control-group'>
+              <label className='checkbox-label'>
                 <input
                   type='checkbox'
                   checked={params.includeReplies}
                   onChange={(e) => setParams({ ...params, includeReplies: e.target.checked })}
+                  disabled={params.all}
                 />
                 <div>
                   <span>Include Replies</span>
-                  <small>Show reply threads</small>
+                  <small>Show reply threads (disabled when fetching all casts)</small>
+                </div>
+              </label>
+            </div>
+
+            <div className='control-group'>
+              <label className='checkbox-label'>
+                <input
+                  type='checkbox'
+                  checked={params.includeParents}
+                  onChange={(e) => setParams({ ...params, includeParents: e.target.checked })}
+                  disabled={params.all || !params.includeReplies}
+                />
+                <div>
+                  <span>Include Parent Casts</span>
+                  <small>Show parent cast text for replies (only available when replies are enabled)</small>
                 </div>
               </label>
             </div>

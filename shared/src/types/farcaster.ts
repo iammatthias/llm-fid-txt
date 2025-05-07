@@ -14,6 +14,7 @@ export interface FarcasterCast {
   hash: string;
   threadHash: string;
   parentHash?: string;
+  parentCast?: FarcasterCast;
   author: {
     fid: number;
     username: string;
@@ -25,6 +26,10 @@ export interface FarcasterCast {
     url: string;
   }>;
   embeds?: Array<{
+    type: string;
+    url: string;
+  }>;
+  embedsDeprecated?: Array<{
     type: string;
     url: string;
   }>;
@@ -52,7 +57,9 @@ export interface FarcasterQueryParams {
   fid?: number;
   username?: string;
   limit?: number;
+  sortOrder?: "newest" | "oldest";
   includeReplies?: boolean;
   all?: boolean;
-  sortOrder?: "newest" | "oldest";
+  includeReactions?: boolean;
+  includeParents?: boolean;
 }

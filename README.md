@@ -11,6 +11,14 @@ Generate a `llm-[fid].txt` file for any Farcaster profile. This tool helps you c
 - Customize the number of casts to include
 - Sort casts by newest or oldest
 - Include or exclude replies
+- Optional reactions (likes & recasts)
+- Optional parent casts for replies
+
+## ⚠️ Limitations
+
+- Reactions and parent casts are only available when fetching a limited number of casts (not available with "All casts")
+- Parent casts are fetched in small batches to prevent rate limiting
+- Reactions are fetched in small batches to prevent rate limiting
 
 ## 🏗️ Prerequisites
 
@@ -24,6 +32,8 @@ Generate a `llm-[fid].txt` file for any Farcaster profile. This tool helps you c
    - Number of casts to include (1-1000)
    - Sort order (newest or oldest)
    - Include replies (yes/no)
+   - Include reactions (likes & recasts)
+   - Include parent casts for replies
 4. Click "Generate" to create your `llm-[fid].txt` file
 
 ## 📝 Form Options
@@ -44,17 +54,25 @@ Generate a `llm-[fid].txt` file for any Farcaster profile. This tool helps you c
 - **Include Replies**:
   - Yes: Include all casts including replies
   - No: Only include top-level casts
+- **Include Reactions**:
+  - Yes: Include likes and recasts for each cast
+  - No: Skip reaction counts
+  - Note: Only available when fetching a limited number of casts
+- **Include Parent Casts**:
+  - Yes: Include the parent cast text for replies
+  - No: Skip parent cast text
+  - Note: Only available when fetching a limited number of casts
 
 ## 🌐 API Usage
 
 You can also use the API directly:
 
 ```bash
-# Get a limited number of casts
-GET https://api.llm-fid.fun/mcp?username=username&limit=10&sortOrder=newest&includeReplies=false
+# Get a limited number of casts with reactions and parents
+GET https://api.llm-fid.fun/mcp?username=username&limit=10&sortOrder=newest&includeReplies=true&includeReactions=true&includeParents=true
 
-# Get all available casts
-GET https://api.llm-fid.fun/mcp?username=username&sortOrder=newest&includeReplies=false&all=true
+# Get all available casts (reactions and parents disabled)
+GET https://api.llm-fid.fun/mcp?username=username&sortOrder=newest&includeReplies=true&all=true
 ```
 
 ### API Parameters
@@ -64,7 +82,9 @@ GET https://api.llm-fid.fun/mcp?username=username&sortOrder=newest&includeReplie
 - `limit` (number, optional): Number of casts to return (only used when all=false)
 - `sortOrder` (string, optional): "newest" or "oldest"
 - `includeReplies` (boolean, optional): true or false
-- `all` (boolean, optional): When true, returns all available casts
+- `includeReactions` (boolean, optional): true or false (only used when all=false)
+- `includeParents` (boolean, optional): true or false (only used when all=false)
+- `all` (boolean, optional): When true, returns all available casts (disables reactions and parents)
 
 ## 📄 License
 
